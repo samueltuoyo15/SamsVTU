@@ -1,8 +1,6 @@
 import pino from "pino"
 import fs from "fs"
 import path from "path"
-import dotenv from "dotenv"
-dotenv.config()
 
 if (process.env.NODE_ENV === "production") {
   const logDir = './logs'
