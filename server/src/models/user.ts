@@ -2,7 +2,7 @@ import { NextFunction } from "express"
 import mongoose, { Document, Model } from "mongoose"
 import * as argon2 from "argon2"
 
-interface IUser extends Document {
+export interface IUser extends Document {
   username: string
   full_name: string
   profile_picture?: string
