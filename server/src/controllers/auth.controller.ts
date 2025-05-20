@@ -33,13 +33,7 @@ async function signUpUser(req: Request, res: Response): Promise<any> {
 
    const otp = await sendOTP(email) 
 
-  return res.status(201).json({
-      status: "success",
-      data: { 
-        userId: user?._id,
-        message: "OTP sent to email" 
-      }
-    })
+  return res.status(201).json({ status: "success", message: "OTP sent to email"  })
   } catch (error) {
     logger.error("Signup error:", error)
     return res.status(500).json({ status: "error", message: "Internal server error" })
@@ -79,16 +73,9 @@ async function verifyOTP(req: Request, res: Response): Promise<any> {
     })
 
      return res.status(200).json({
-      data: {
-        user: {
-          _id: user._id,
-          email: user.email,
-          username: user.username,
-          is_verified: user.is_verified,
-          wallet_balance: user.wallet_balance,
-        },
-        accessToken,
-      },
+      status: "success",
+      message: "Account Verified Successfully",
+      accessToken
     })
   } catch (error) {
     logger.error("OTP verification error:", error)
@@ -143,16 +130,9 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     await user.save()
     
    return res.status(200).json({
-      data: {
-        user: {
-         _id: user._id,
-        email: user.email,
-        username: user.username,
-        is_verified: user.is_verified,
-        wallet_balance: user.wallet_balance,
-        },
-        accessToken,
-      },
+      status: "success",
+      message: "User Signed In Successfully",
+      accessToken
     })
   } catch(error){
     logger.error("Login User error:", error)
