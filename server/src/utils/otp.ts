@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import Otp from "@/models/Otp" 
+import Otp from "@/models/otp" 
 
 const transporter = nodemailer.createTransport({
   service: "gmail",

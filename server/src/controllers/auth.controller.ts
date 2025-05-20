@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import User from "@/models/User"
+import User from "@/models/user"
 import { generateAccessToken } from "@/utils/generate.token"
 import { sendOTP, verifyStoredOTP } from "@/utils/otp" 
 import logger from "@/utils/logger"
@@ -56,7 +56,6 @@ async function signUpUser(req: Request, res: Response) {
       status: "error",
       message: "Internal server error" 
     })
-    return 
   }
 }
 
@@ -122,7 +121,6 @@ async function verifyOTP(req: Request, res: Response) {
       status: "error",
       message: "Internal server error",
     })
-    return
   }
 }
 
@@ -145,15 +143,15 @@ async function loginUser(req: Request, res: Response) {
     }
     
     
+    
   } catch(error){
     logger.error("OTP verification error:", error);
      res.status(500).json({
       status: "error",
       message: "Internal server error",
     })
-    return
   }
 }
  
 
-export { signUpUser, verifyOTP }
+export { signUpUser, verifyOTP, loginUser}
