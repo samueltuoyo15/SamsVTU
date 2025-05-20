@@ -23,7 +23,14 @@ async function signUpUser(req: Request, res: Response) {
       })
       return 
     }
-
+    const existingUsername = await User.findOne({ username })
+    if (existingUsername) {
+       res.status(409).json({
+        status: "error",
+        message: "Username already taken",
+      })
+      return
+    }
     const user = await User.create({
       full_name,
       username,
@@ -53,45 +60,100 @@ async function signUpUser(req: Request, res: Response) {
   }
 }
 
-async function verifyOTP(req: Request, res: Response){
+async function verifyOTP(req: Request, res: Response) {
   try {
     const { userId, otp } = req.body
-    const isValid = await verifyStoredOTP(userId, otp)
-    if (!isValid) {
-       res.status(400).json({ 
+
+    if (!userId || !otp) {
+       res.status(400).json({
         status: "error",
-        message: "Invalid/expired OTP" 
+        message: "User ID and OTP are required",
       })
-      return 
+      return
     }
+
+    const isValid = await verifyStoredOTP(userId, otp);
+    if (!isValid) {
+       res.status(400).json({
+        status: "error",
+        message: "Invalid/expired OTP",
+      })
+      return
+    }
+
+ 
     const user = await User.findByIdAndUpdate(
-      userId,
-      { isVerified: true },
-      { new: true }
-    )
+      userId, { isVerified: true }, { new: true }).select("-password")
 
-    const token = generateAccessToken(user?._id, user?.email)
+    if (!user) {
+       res.status(404).json({
+        status: "error",
+        message: "User not found",
+      })
+      return
+    }
+  
+    const accessToken = generateAccessToken(user._id, user.email)
+    const refreshToken = generateRefreshToken(user._id, user.email)
 
-    res.json({
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
+    })
+
+     res.json({
       status: "success",
       data: {
         user: {
-          _id: user?._id,
-          email: user?.email,
-          username: user?.username
+          _id: user._id,
+          email: user.email,
+          username: user.username,
+          isVerified: user.isVerified,
         },
-        token
-      }
+        accessToken,
+      },
     })
-   return 
+    return
   } catch (error) {
-    logger.error("OTP verification error:", error)
-    res.status(500).json({ 
+    logger.error("OTP verification error:", error);
+     res.status(500).json({
       status: "error",
-      message: "Internal server error" 
+      message: "Internal server error",
     })
-    return 
+    return
   }
 }
+
+async function loginUser(req: Request, res: Response) {
+  try {
+    const { username, password } = req.body
+    if(!username || !password){
+       res.status(400).json({
+        status: "error",
+        message: "All fields aee required",
+      })
+      return 
+    }
+    const user = User.findOne({ username })
+    if(!user){
+      res.status(401).json({
+        status: "error",
+        message: "Invalid Credentials",
+      })
+    }
+    
+    
+  } catch(error){
+    logger.error("OTP verification error:", error);
+     res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    })
+    return
+  }
+}
+ 
 
 export { signUpUser, verifyOTP }
