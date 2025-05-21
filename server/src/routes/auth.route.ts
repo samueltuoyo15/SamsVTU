@@ -4,7 +4,7 @@ import { validateSignUpInput } from "@/middlewares/signup.schema"
 import { signUpUser,  } from "@/controllers/auth.controller"
 const router = Router()
 
-router.post("/sign-up", createBasicRateLimiter(100, 3600000), validateSignUpInput, signUpUser)
+router.post("/signup", createBasicRateLimiter(100, 3600000), validateSignUpInput, signUpUser)
 
 export default router 
 

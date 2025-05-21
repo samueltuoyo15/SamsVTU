@@ -4,7 +4,9 @@ import { generateAccessToken, generateRefreshToken } from "@/utils/generate.toke
 import { sendOTP, verifyStoredOTP } from "@/utils/otp" 
 import logger from "@/utils/logger"
 import RefreshToken from "@/models/refresh.token"
-import { addHours } from "date-fns"
+import PasswordToken from "@/models/password.token"
+import { addHours, isAfter } from "date-fns"
+import crypto from "crypto"
 
 async function signUpUser(req: Request, res: Response): Promise<any> {
   try {
@@ -195,13 +197,58 @@ async function refreshAccessToken(req: Request, res: Response): Promise<any> {
       sameSite: "strict",
       maxAge: 15 * 60 * 1000, 
    })
-  return res.status(200).json({ status: "success", data: { accessToken }})
+  return res.status(201).json({ status: "success", data: { accessToken }})
  } catch(error){
-   logger.error("Refesresh Access Token error:", error)
+   logger.error("Refresh Access Token error:", error)
    return res.status(500).json({ status: "error", message: "Internal server error", })
   }
 }
-export { signUpUser, verifyOTP, loginUser, logoutUser, refreshAccessToken}
+
+async function forgotPassword(req: Request, res: Response): Promise<any> {
+  logger.info("Forget password Endpoint Hit")
+  try {
+    const { email } = req.body
+    if(!email) {
+      res.status(400).json({ status: "error", message: "Email is required"})
+    }
+    
+    const user = await User.findOne({ email })
+    if(!user) {
+      return res.status(200).json({ status: "success", message: "if the email exists a reset link has been sent" })
+    }
+    
+    const resetToken = crypto.randomBytes(32).toString("hex")
+    const expiresAt = addHours(new Date(), 1)
+    
+    PasswordToken.create({
+      token: resetToken,
+      user: user._id,
+      expiresAt
+    })
+    
+    const resetLink = `${process.env.CLIENT_URL}/reset-token?token=${resetToken}`
+    logger.info(`Password reset link for ${email}: ${resetToken}`)
+    // Todo send rest link to their email
+    
+    res.status(200).json({ status: "success", message: "password rest link sent to email"})
+  }catch(error){
+   logger.error("Forgot Password:", error)
+   return res.status(500).json({ status: "error", message: "Internal server error", })
+  }
+}
+ 
+ 
+ async function resetPassword(req: Request, res: Response): Promise<any> {
+  logger.info("Forget password Endpoint Hit")
+  try{
+    
+  }catch(error){
+   logger.error("Reset Password:", error)
+   return res.status(500).json({ status: "error", message: "Internal server error", })
+  }
+ }
+ 
+export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword }
 
 
 

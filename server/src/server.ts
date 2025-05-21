@@ -13,7 +13,7 @@ import requestLogger from "@/middlewares/request.logger"
 import errorHandler from "@/middlewares/error.handler"
 import authRoute from "@/routes/auth.route"
 import { connectToDb, disconnectFromDb } from "@/config/connect.db"
-import { redis, disconnectRedis } from "@/config/connect-redis"
+import { redis, disconnectRedis } from "@/config/connect.redis"
 import logger from "@/utils/logger"
 
 const app = express()
