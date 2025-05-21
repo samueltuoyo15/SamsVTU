@@ -252,7 +252,7 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
       return res.status.(400).json({ status: "error", message: "Invalid Reset Token "})
     }
     
-    if(isAfter(newDate, passwordToken.expiresAt)) {
+    if(isAfter(new Date(), passwordToken.expiresAt)) {
       await PasswordToken.deleteOne({ token })
       return res.status.(400).json({ status: "error", message: "Expired Reset Token"})
     }
@@ -262,7 +262,7 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
     await user.save()
     await RefreshToken.deleteMany({ user: user._id })
     await PasswordToken.deleteOne({ token })
-    logger.info(`Password Reset was successful for ${usef._id}`)
+    logger.info(`Password Reset was successful for ${user._id}`)
     res.status(201).json({ status: "success", message: "Password reset was successful!"})
   } catch(error){
    logger.error("Reset Password Failed:", error)
@@ -275,7 +275,7 @@ async function deleteAccount(req: Request, res: Response): Promise<any> {
   try {
     const { email, password } = req.body
     if(!email || !password) {
-      return res.status.(400).json({ status: "error", message: "Email and Password are required"})
+      return res.status(400).json({ status: "error", message: "Email and Password are required"})
     }
     
     const user = await User.verifyForDeletion(email)
