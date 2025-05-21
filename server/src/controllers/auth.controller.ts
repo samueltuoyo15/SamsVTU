@@ -5,6 +5,8 @@ import { sendOTP, verifyStoredOTP } from "@/utils/otp"
 import logger from "@/utils/logger"
 import RefreshToken from "@/models/refresh.token"
 import PasswordToken from "@/models/password.token"
+import Transaction from "@/models/transaction" 
+import Otp from "@/models/otp" 
 import { addHours, isAfter } from "date-fns"
 import crypto from "crypto"
 
@@ -231,24 +233,84 @@ async function forgotPassword(req: Request, res: Response): Promise<any> {
     // Todo send rest link to their email
     
     res.status(200).json({ status: "success", message: "password rest link sent to email"})
-  }catch(error){
+  } catch(error){
    logger.error("Forgot Password:", error)
    return res.status(500).json({ status: "error", message: "Internal server error", })
   }
 }
  
- 
- async function resetPassword(req: Request, res: Response): Promise<any> {
+async function resetPassword(req: Request, res: Response): Promise<any> {
   logger.info("Forget password Endpoint Hit")
   try{
+    const { token, new_password } = req.body
+    if(!token || !new_password) {
+      return res.status.(400).json({ status: "error", message: "All fields are required"})
+    }
     
-  }catch(error){
-   logger.error("Reset Password:", error)
+    const passwordToken = await PasswordToken.findOne({ token }).populate<{user: IUser}>("user")
+    if(!PasswordToken) {
+      return res.status.(400).json({ status: "error", message: "Invalid Reset Token "})
+    }
+    
+    if(isAfter(newDate, passwordToken.expiresAt)) {
+      await PasswordToken.deleteOne({ token })
+      return res.status.(400).json({ status: "error", message: "Expired Reset Token"})
+    }
+    
+    const user = passwordToken.user
+    user.password = new_password
+    await user.save()
+    await RefreshToken.deleteMany({ user: user._id })
+    await PasswordToken.deleteOne({ token })
+    logger.info(`Password Reset was successful for ${usef._id}`)
+    res.status(201).json({ status: "success", message: "Password reset was successful!"})
+  } catch(error){
+   logger.error("Reset Password Failed:", error)
    return res.status(500).json({ status: "error", message: "Internal server error", })
   }
  }
  
-export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword }
+async function deleteAccount(req: Request, res: Response): Promise<any> {
+  logger.info("Delete account Endpoint Hit!")
+  try {
+    const { email, password } = req.body
+    if(!email || !password) {
+      return res.status.(400).json({ status: "error", message: "Email and Password are required"})
+    }
+    
+    const user = await User.verifyForDeletion(email)
+    if(!user) {
+      return res.status(400).json({ status: "success", message: "Account Deletion Processed "})
+    }
+    
+    const passwordValid = await user.comparePassword(password)
+    if(!passwordValid) {
+      return res.status(401).json({ status: "success", message: "Invalid Credentials "})
+    }
+    
+    await promise.all([
+      User.deleteOne({ _id: user._id })
+      Transaction.deleteMany({ _id: user._id })
+      RefreshToken.deleteMany({ _id: user._id })
+      PasswordToken.deleteMany({ _id: user._id })
+      Otp.deleteMany({ _id: user._id })
+      ])
+    res.clearCookie("accessToken")
+    res.clearCookie("refreshToken")
+    
+    logger.info(`Account Deleted for user: ${user._id}`)
+     return res.status(200).json({ 
+      status: "success",
+      message: "Account and all related data deleted",
+      deletedAt: new Date() 
+    })
+  } catch(error){
+   logger.error("Failed to delete account:", error)
+   return res.status(500).json({ status: "error", message: "Internal server error", })
+  }
+}
+ 
+export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword, deleteAccount } 
 
 
 

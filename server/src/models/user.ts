@@ -121,6 +121,14 @@ userSchema.methods.comparePin = async function(candidatePin: string) {
   return await argon2.verify(this.pin, candidatePin)
 }
 
+
+userSchema.methods.verifyForDeletion = async function(candidatePassword: string) {
+  if (!this.candidatePassword) return false
+ const isMatch = await argon2.verify(this.password, candidatePassword)
+  if (!isMatch) throw new Error('Invalid credentials')
+  return this
+}
+
 userSchema.virtual("total_spent").get(function () {
  if (!this.transactions) return 0
   return this.transactions.filter((t: any) => t.status === "success" && t.type !== "deposit").reduce((sum: number, t: any) => sum + t.amount, 0)
