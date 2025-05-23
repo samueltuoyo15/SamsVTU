@@ -244,17 +244,17 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
   try{
     const { token, new_password } = req.body
     if(!token || !new_password) {
-      return res.status.(400).json({ status: "error", message: "All fields are required"})
+      return res.status(400).json({ status: "error", message: "All fields are required"})
     }
     
     const passwordToken = await PasswordToken.findOne({ token }).populate<{user: IUser}>("user")
-    if(!PasswordToken) {
-      return res.status.(400).json({ status: "error", message: "Invalid Reset Token "})
+    if(!passwordToken) {
+      return res.status(400).json({ status: "error", message: "Invalid Reset Token "})
     }
     
     if(isAfter(new Date(), passwordToken.expiresAt)) {
       await PasswordToken.deleteOne({ token })
-      return res.status.(400).json({ status: "error", message: "Expired Reset Token"})
+      return res.status(400).json({ status: "error", message: "Expired Reset Token"})
     }
     
     const user = passwordToken.user
@@ -288,11 +288,11 @@ async function deleteAccount(req: Request, res: Response): Promise<any> {
       return res.status(401).json({ status: "success", message: "Invalid Credentials "})
     }
     
-    await promise.all([
-      User.deleteOne({ _id: user._id })
-      Transaction.deleteMany({ _id: user._id })
-      RefreshToken.deleteMany({ _id: user._id })
-      PasswordToken.deleteMany({ _id: user._id })
+    await Promise.all([
+      User.deleteOne({ _id: user._id }),
+      Transaction.deleteMany({ _id: user._id }),
+      RefreshToken.deleteMany({ _id: user._id }),
+      PasswordToken.deleteMany({ _id: user._id }),
       Otp.deleteMany({ _id: user._id })
       ])
     res.clearCookie("accessToken")

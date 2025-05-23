@@ -5,8 +5,6 @@ import helmet from "helmet"
 import compression from "compression"
 import mongoose from "mongoose"
 import cookieParser from "cookie-parser"
-import { RedisStore } from "connect-redis"
-import session from "express-session"
 import { createBasicRateLimiter } from "@/middlewares/rate.limit"
 import { corsConfig } from "@/config/cors.config"
 import requestLogger from "@/middlewares/request.logger"
@@ -19,18 +17,6 @@ import logger from "@/utils/logger"
 const app = express()
 const PORT = process.env.PORT || 5000
 
-app.use(session({
-  store: new RedisStore({ client: redis, prefix: "session:" }),
-  secret: process.env.SESSION_SECRET!,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24
-  }
-}))
 app.use(corsConfig())
 app.use(helmet())
 app.use(createBasicRateLimiter(100, 900000))

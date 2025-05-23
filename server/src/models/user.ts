@@ -19,6 +19,7 @@ export interface IUser extends Document {
   total_spent?: number 
   comparePin(candidatePin: string): Promise<boolean>
   comparePassword(candidatePassword: string): Promise<boolean>
+  verifyForDeletion(candidatePassword: string): Promise<boolean>
 }
 interface IUserModel extends Model<IUser> {}
 const userSchema = new mongoose.Schema<IUser, IUserModel>({
