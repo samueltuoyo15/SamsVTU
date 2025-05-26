@@ -4,7 +4,8 @@ import logger from "@/utils/logger"
 import { redis } from "@/config/connect.redis"
 
 async function getCurrentUser(req: Request, res: Response): Promise<any> {
-    logger.info("Me Endpoint Hit")
+  logger.info("Me Endpoint Hit")
+  const USER_CACHE_TTL = 5 * 60
   try {
     const userId = req?.user?._id
     logger.info(`User Id: ${userId}`)
@@ -15,20 +16,31 @@ async function getCurrentUser(req: Request, res: Response): Promise<any> {
     
     const cachedUser = await redis.get(`currentUser:${userId}`)
     if (cachedUser) {
+      logger.debug(`Cache Hit for UserId: ${userId}`)
       return res.status(200).json({ status: "success", data: JSON.parse(cachedUser)})
     }
     
-    const user = await User.findById(userId)
+    const user = await User.findById(userId).lean()
   
     if(!user) {
+     logger.warn(`User not found: ${userId}`)
      return res.status(404).json({ status: "error", message: "user does not exist"})
     }
     
-    await redis.set(`currentUser:${userId}`, JSON.stringify(user), "EX", 5 * 60)
+    await redis.set(`currentUser:${userId}`, JSON.stringify(user), "EX", USER_CACHE_TTL).catch(e => logger.error("Cache Set Failed:", e))
     return res.status(200).json({ status: "success", data: user })
   } catch(error) {
-    logger.error("error getting user:", error)
+    logger.error(`Error fetching user: ${req?.user?._id}`, error)
     return res.status(500).json({ status: "error", message: "Internal server error" })
   }
 }
- 
+
+async function updateUserInfo(req: Request, res: Response): Promise<any> {
+  logger.info("Update UserInfo Endpoint Hit")
+  try{
+    
+  } catch(error) {
+    logger.error(`Error Updating user Info: ${req?.user?._id}`, error)
+    return res.status(500).json({ status: "error", message: "Internal server error" })
+  }
+}

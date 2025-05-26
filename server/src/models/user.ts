@@ -5,7 +5,7 @@ import * as argon2 from "argon2"
 export interface IUser extends Document {
   username: string
   full_name: string
-  profile_picture?: string
+  avatar?: string
   wallet_balance: number
   kyc_verified: boolean
   is_verified: boolean
@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema<IUser, IUserModel>({
     required: true,
     trim: true,
   },
-  profile_picture: {
+  avatar: {
     type: String,
     default: null,
   },

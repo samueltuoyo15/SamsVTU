@@ -34,10 +34,13 @@ async function signUpUser(req: Request, res: Response): Promise<any> {
       email,
       is_verified: false
     })
-
-   // TODO const otp = await sendOTP(email) 
-
-  return res.status(201).json({ status: "success", message: "OTP sent to email"  })
+    try {
+     const otp = await sendOTP(email) 
+     return res.status(201).json({ status: "success", message: "OTP sent to email"  })
+   } catch (otpError) {
+     await User.deleteOne({ _id: user._id })
+     throw otpError
+    }
   } catch (error) {
     logger.error("Signup error:", error)
     return res.status(500).json({ status: "error", message: "Internal server error" })
@@ -47,20 +50,20 @@ async function signUpUser(req: Request, res: Response): Promise<any> {
 async function verifyOTP(req: Request, res: Response): Promise<any> {
   try {
     logger.info("VerifyOtp Endpoint Hit")
-    const { userId, otp } = req.body
+    const { email, otp } = req.body
 
     if (!userId || !otp) {
-       return res.status(400).json({ status: "error", message: "User ID and OTP are required",})
+       return res.status(400).json({ status: "error", message: "email and OTP are required",})
     }
 
-    const isValid = await verifyStoredOTP(userId, otp);
+    const isValid = await verifyStoredOTP(email, otp)
     if (!isValid) {
       return res.status(400).json({status: "error",message: "Invalid/expired OTP", })
     }
 
  
-    const user = await User.findByIdAndUpdate(
-     userId, { is_verified: true }, { new: true }).select("-password")
+    const user = await User.findOneAndUpdate(
+     email, { is_verified: true }, { new: true })
 
     if (!user) {
       return res.status(404).json({ status: "error", message: "User not found",})

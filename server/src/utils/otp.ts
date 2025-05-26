@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import Otp from "@/models/otp" 
+import { generateAndStoreOTP } from "@/services/otp";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -26,9 +26,5 @@ export const sendOTP = async (email: string) => {
 }
 
 export const verifyStoredOTP = async (email: string, otp: string) => {
-  const record = await Otp.findOne({ email, otp })
-  if (!record || record.expiresAt < new Date()) return false
-  
-  await Otp.deleteOne({ _id: record._id }) 
-  return true
+  return await verifyOTP(email, otp)
 }
