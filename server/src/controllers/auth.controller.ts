@@ -344,7 +344,7 @@ async function deleteAccount(req: Request, res: Response): Promise<any> {
   }
 }
  
-export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword, changePassword, deleteAccount } 
+export { signUpUser, verifyOTP, loginUser, logoutUser, refreshAccessToken, forgotPassword, resetPassword, changePassword, deleteAccount } 
 
 
 

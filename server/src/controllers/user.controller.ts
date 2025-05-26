@@ -3,9 +3,10 @@ import User, { IUser } from "@/models/user"
 import logger from "@/utils/logger"
 import { redis } from "@/config/connect.redis"
 
+const USER_CACHE_TTL = 5 * 60
+
 async function getCurrentUser(req: Request, res: Response): Promise<any> {
   logger.info("Me Endpoint Hit")
-  const USER_CACHE_TTL = 5 * 60
   try {
     const userId = req?.user?._id
     logger.info(`User Id: ${userId}`)
@@ -38,7 +39,24 @@ async function getCurrentUser(req: Request, res: Response): Promise<any> {
 async function updateUserInfo(req: Request, res: Response): Promise<any> {
   logger.info("Update UserInfo Endpoint Hit")
   try{
+    const { userId } = req?.user?._id
+    const updates = req.body
+    if(!userId || !updates) {
+      return res.status(422).json({ status: "error", message: "user Id and updated info are required" })
+    }
     
+   const fieldsToUpdate = {
+     username: updates.username
+     full_name: updates.full_name
+   }
+   
+   const updatedUser = await User.findByIdAndUpdate(userId, fieldsToUpdate, { new: true, runValidators: true})
+   if(!updatedUser) {
+      return res.status(404).json({ status: "error", message: "user not found" })
+   }
+   
+     await redis.set(`currentUser:${userId}`, JSON.stringify(updatedUser), "EX", USER_CACHE_TTL).catch(e => logger.error("Cache Update Failed:", e))
+     return res.status(200).json({ status: "success", message: "profile update successfully" })
   } catch(error) {
     logger.error(`Error Updating user Info: ${req?.user?._id}`, error)
     return res.status(500).json({ status: "error", message: "Internal server error" })
