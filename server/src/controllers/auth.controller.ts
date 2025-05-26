@@ -35,7 +35,7 @@ async function signUpUser(req: Request, res: Response): Promise<any> {
       is_verified: false
     })
 
-   const otp = await sendOTP(email) 
+   // TODO const otp = await sendOTP(email) 
 
   return res.status(201).json({ status: "success", message: "OTP sent to email"  })
   } catch (error) {
@@ -96,12 +96,12 @@ async function loginUser(req: Request, res: Response): Promise<any> {
     }
     const user = await User.findOne({ email }).exec()
     if(!user){
-     return res.status(401).json({ status: "error", message: "Invalid Credentials", })
+     return res.status(401).json({ status: "error", message: "User Does not Exists", })
     }
     
     const isPasswordValid = await user.comparePassword(password)
     if(!isPasswordValid){
-     return res.status(401).json({ status: "error", message: "Invalid Credentials"})
+     return res.status(401).json({ status: "error", message: "Incorrect Password"})
     }
     
     if(!user.is_verified){
@@ -270,6 +270,37 @@ async function resetPassword(req: Request, res: Response): Promise<any> {
   }
  }
  
+ async function changePassword(req: Request, res: Response): Promise<any> {
+  logger.info("Change password Endpoint Hit")
+  try{
+    const { current_password, new_password } = req.body
+    const userId = req?.user?._id
+   
+    if(!current_password || !new_password) {
+      return res.status(400).json({ status: "error", message: "Current Password and New Password is required "})
+    }
+    
+    const user = await User.findById(userId)
+    if(!user){
+     return res.status(401).json({ status: "error", message: "User not found", })
+    }
+    
+    const isPasswordValid = await user.comparePassword(current_password)
+    if(!isPasswordValid){
+     return res.status(401).json({ status: "error", message: "Current Password is incorrect"})
+    }
+    
+    user.password = new_password
+    await user.save()
+    await RefreshToken.deleteMany({ user: userId })
+   logger.info(`Password was changed successful for ${user._id}`)
+    res.status(201).json({ status: "success", message: "Password Changedwas successful!"})
+  } catch(error){
+   logger.error("Change Password Failed:", error)
+   return res.status(500).json({ status: "error", message: "Internal server error", })
+  }
+ }
+ 
 async function deleteAccount(req: Request, res: Response): Promise<any> {
   logger.info("Delete account Endpoint Hit!")
   try {
@@ -310,7 +341,7 @@ async function deleteAccount(req: Request, res: Response): Promise<any> {
   }
 }
  
-export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword, deleteAccount } 
+export { signUpUser, verifyOTP, loginUser, logoutUser,refreshAccessToken,  forgotPassword, resetPassword, changePassword, deleteAccount } 
 
 
 

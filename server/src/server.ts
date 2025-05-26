@@ -13,6 +13,7 @@ import authRoute from "@/routes/auth.route"
 import { connectToDb, disconnectFromDb } from "@/config/connect.db"
 import { redis, disconnectRedis } from "@/config/connect.redis"
 import logger from "@/utils/logger"
+import cron from "node-cron"
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -39,6 +40,12 @@ const server = app.listen(PORT, async () => {
   try {
     await connectToDb()
     logger.info(`Server running on port ${PORT}`)
+    cron.schedule('*/14 * * * *', () => {
+    const keepAliveUrl = `http://localhost:8080/health`
+    console.log(`Performing self-ping to: ${keepAliveUrl}`)
+    fetch(keepAliveUrl).then(res => console.log(`Keep-alive ping successful (Status: ${res.status})`)).catch(err => console.error('Keep-alive ping failed:', err))
+  })
+  console.log('Self-pinger initialized (runs every 14 minutes)')
   } catch (err) {
     logger.error("Failed to start server:", err)
     process.exit(1)
