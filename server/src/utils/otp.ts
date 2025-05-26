@@ -9,14 +9,14 @@ const transporter = nodemailer.createTransport({
     }
 })
 
-export const sendOTP = async (email: string) => {
+async function sendOTP(email: string) {
   const otp = Math.floor(100000 + Math.random() * 900000)
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
   await Otp.create({ email, otp, expiresAt })
 
   await transporter.sendMail({
-    from: '"SwiftBills" <no-reply@vtuapp.com>',
+    from: "SwiftBills",
     to: email,
     subject: "Verify Your Email",
     html: `Your OTP is <b>${otp}</b>. Expires in 10 minutes.`
@@ -25,6 +25,8 @@ export const sendOTP = async (email: string) => {
   return otp
 }
 
-export const verifyStoredOTP = async (email: string, otp: string) => {
+async function verifyStoredOTP (email: string, otp: string){
   return await verifyOTP(email, otp)
 }
+
+export { sendOTP, verifyStoredOTP }
