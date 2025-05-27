@@ -15,6 +15,7 @@
       "@/models/*": ["./src/models/*"],
       "@/controllers/*": ["./src/controllers/*"],
       "@/utils/*": ["./src/utils/*"]
+      "@/services/*": ["./src/services/*"]
     },
     "types": ["node"],
     "allowJs": true,
