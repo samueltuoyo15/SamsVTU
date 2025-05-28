@@ -10,7 +10,7 @@ async function fundWallet(req: Request, res: Response): Promise<any> {
   const { email, amount } = req.body
   
   if(!email || !amount) {
-    return res.status(400).json({ status: error, message: "email and amount are required"})
+    return res.status(422).json({ status: "error", message: "email and amount are required"})
   }
   logger.info(email, amount)
   
@@ -18,7 +18,6 @@ async function fundWallet(req: Request, res: Response): Promise<any> {
     logger.debug("Invalid amount", amount)
     return res.status({ status: "error", message: "Invalid amount. amount cannot be less than 100"})
   }
-  
   const reference = `SAMS_VTU_${Date.now()}_${Math.floor(Math.random() * 1000))}`
   const initData = await initializePayment(amount, email, reference)
   
@@ -26,7 +25,6 @@ async function fundWallet(req: Request, res: Response): Promise<any> {
     logger.info("Failed to initialize funding", initData.authorization_url)
     return res.status(500).json({ status: "error", message: "failed to intilaized funding"})
   }
-  
   await Transaction.create({
     user: req?.user?._id,
     type: "deposit",
